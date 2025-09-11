@@ -1,6 +1,6 @@
 # Milk-V Duo S Alpine Linux (aarch64)
 
-A setup script that replaces the default Buildroot Linux distribution on the Milk-V Duo S with Alpine Linux while preserving all hardware-specific functionality.
+A setup script that replaces the default Buildroot Linux distribution on the Milk-V Duo S with Alpine Linux 3.22 while preserving all hardware-specific functionality.
 
 ## What this project does
 
