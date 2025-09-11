@@ -2,6 +2,8 @@
 
 A setup script that replaces the default Buildroot Linux distribution on the Milk-V Duo S with Alpine Linux 3.22 while preserving all hardware-specific functionality.
 
+![milkv duo](image.png)
+
 ## What this project does
 
 This setup script (`setup.sh`) automatically:
