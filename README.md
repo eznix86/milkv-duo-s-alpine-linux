@@ -26,6 +26,8 @@ This setup script (`setup.sh`) automatically:
 ./setup.sh
 ```
 
+or just flash your sd card with the image.
+
 Tested on ubuntu 24.04 (aarch64 multipass VM)
 
 ## Result
