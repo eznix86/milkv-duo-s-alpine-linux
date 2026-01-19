@@ -254,31 +254,18 @@ EOF
 
 sudo chmod +x $ROOT/usr/local/bin/autologin
 
-echo "Configuring WiFi..."
-sudo mkdir -p $ROOT/etc/wpa_supplicant
-sudo tee $ROOT/etc/wpa_supplicant/wpa_supplicant.conf > /dev/null <<'EOF'
-ctrl_interface=/var/run/wpa_supplicant
-ap_scan=1
-update_config=1
-
-# Example WiFi network (edit as needed)
-#network={
-#    ssid="Your_WiFi_SSID"
-#    psk="Your_WiFi_Password"
-#    key_mgmt=WPA-PSK
-#}
-EOF
-
-
 echo "Setting up network auto-recovery watcher..."
 sudo mkdir -p $ROOT/etc/local.d/
-cat > $ROOT/etc/local.d/netwatcher.start << 'WATCHER_EOF'
+sudo tee $ROOT/etc/local.d/netwatcher.start > /dev/null << 'WATCHER_EOF'
 #!/bin/sh
 LOGFILE=/var/log/netwatcher.log
+
 log() {
     echo "$(date) - $1" >> $LOGFILE
 }
+
 log Netwatcher started
+
 while true; do
     if ! ping -c 1 -W 3 192.168.8.1 >/dev/null 2>&1; then
         log "Gateway ping failed, checking interface..."
@@ -304,8 +291,46 @@ while true; do
 done &
 WATCHER_EOF
 sudo chmod +x $ROOT/etc/local.d/netwatcher.start
-sudo ln -sf /etc/local.d/netwatcher.start $ROOT/etc/runlevels/default/netwatcher
+
+sudo mkdir -p $ROOT/etc/init.d/
+sudo tee $ROOT/etc/init.d/netwatcher > /dev/null << 'INITSCRIPT'
+#!/sbin/openrc-run
+
+name="Network Auto-Recovery Watcher"
+command="/bin/sh"
+command_args="/etc/local.d/netwatcher.start"
+pidfile="/run/netwatcher.pid"
+command_background=true
+
+depend() {
+    after networking
+    need net
+}
+
+start_pre() {
+    checkpath --directory --owner root:root --mode 0755 /run
+}
+INITSCRIPT
+sudo chmod +x $ROOT/etc/init.d/netwatcher
+
 echo "Network auto-recovery watcher installed"
+
+
+echo "Configuring WiFi..."
+sudo mkdir -p $ROOT/etc/wpa_supplicant
+sudo tee $ROOT/etc/wpa_supplicant/wpa_supplicant.conf > /dev/null <<'EOF'
+ctrl_interface=/var/run/wpa_supplicant
+ap_scan=1
+update_config=1
+
+# Example WiFi network (edit as needed)
+#network={
+#    ssid="Your_WiFi_SSID"
+#    psk="Your_WiFi_Password"
+#    key_mgmt=WPA-PSK
+#}
+EOF
+
 
 
 echo "Configuring fstab..."
@@ -422,10 +447,10 @@ rc-update add crond default
 rc-update add chronyd default
 rc-update add dropbear default
 rc-update add avahi-daemon default
+rc-update add netwatcher default
 rc-update add killprocs shutdown
 rc-update add mount-ro shutdown
 rc-update add savecache shutdown
-rc-update add netwatcher default
 
 ln -s /usr/share/zoneinfo/Etc/UTC /etc/localtime
 
