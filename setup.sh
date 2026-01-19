@@ -7,7 +7,7 @@ echo "Setting up Milk-V Duo S with Alpine Linux and OpenRC init..."
 MILKV_DUO_S_VERSION="v2.0.1"
 MILKV_DUO_S_IMG="milkv-duos-glibc-arm64-sd_$MILKV_DUO_S_VERSION.img"
 MILKV_DUO_S_ZIP="$MILKV_DUO_S_IMG.zip"
-ALPINE_ROOT_FS="alpine-minirootfs-3.22.0-aarch64.tar.gz"
+ALPINE_ROOT_FS="alpine-minirootfs-3.23.2-aarch64.tar.gz"
 
 MOUNT=/mnt/img
 ROOT=$MOUNT/root
