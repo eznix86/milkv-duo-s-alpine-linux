@@ -269,6 +269,45 @@ update_config=1
 #}
 EOF
 
+
+echo "Setting up network auto-recovery watcher..."
+sudo mkdir -p $ROOT/etc/local.d/
+cat > $ROOT/etc/local.d/netwatcher.start << 'WATCHER_EOF'
+#!/bin/sh
+LOGFILE=/var/log/netwatcher.log
+log() {
+    echo "$(date) - $1" >> $LOGFILE
+}
+log Netwatcher started
+while true; do
+    if ! ping -c 1 -W 3 192.168.8.1 >/dev/null 2>&1; then
+        log "Gateway ping failed, checking interface..."
+        ip link set eth0 up 2>/dev/null
+        sleep 2
+        if ! ping -c 1 -W 3 8.8.8.8 >/dev/null 2>&1; then
+            log "Network down! Restarting networking..."
+            /etc/init.d/networking restart
+            sleep 5
+            ip link set eth0 up 2>/dev/null
+            sleep 3
+            if ping -c 1 -W 3 192.168.8.1 >/dev/null 2>&1; then
+                log "Network restored successfully"
+            else
+                log "Network restart failed, waiting 60s before retry..."
+                sleep 60
+            fi
+        else
+            log "Network restored via interface up"
+        fi
+    fi
+    sleep 10
+done &
+WATCHER_EOF
+sudo chmod +x $ROOT/etc/local.d/netwatcher.start
+sudo ln -sf /etc/local.d/netwatcher.start $ROOT/etc/runlevels/default/netwatcher
+echo "Network auto-recovery watcher installed"
+
+
 echo "Configuring fstab..."
 sudo tee $ROOT/etc/fstab > /dev/null <<'EOF'
 # <file system>   <mount point>   <type>    <options>                        <dump> <pass>
@@ -386,6 +425,7 @@ rc-update add avahi-daemon default
 rc-update add killprocs shutdown
 rc-update add mount-ro shutdown
 rc-update add savecache shutdown
+rc-update add netwatcher default
 
 ln -s /usr/share/zoneinfo/Etc/UTC /etc/localtime
 
